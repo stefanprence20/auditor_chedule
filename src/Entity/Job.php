@@ -17,6 +17,12 @@ class Job
     private $id;
 
     /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Auditor", inversedBy="jobs")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $auditor;
+
+    /**
      * @ORM\Column(type="string", length=255)
      */
     private $title;
@@ -37,10 +43,9 @@ class Job
     private $completed;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Auditor", inversedBy="jobs")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\Column(type="text", nullable=true)
      */
-    private $auditor;
+    private $assessment;
 
     public function getId(): ?int
     {
@@ -103,6 +108,18 @@ class Job
     public function setAuditor(?Auditor $auditor): self
     {
         $this->auditor = $auditor;
+
+        return $this;
+    }
+
+    public function getAssessment(): ?string
+    {
+        return $this->assessment;
+    }
+
+    public function setAssessment(?string $assessment): self
+    {
+        $this->assessment = $assessment;
 
         return $this;
     }

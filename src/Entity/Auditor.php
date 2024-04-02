@@ -29,6 +29,11 @@ class Auditor
     private $location;
 
     /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $timezone;
+
+    /**
      * @ORM\OneToMany(targetEntity="App\Entity\Job", mappedBy="auditor")
      */
     private $jobs;
@@ -63,6 +68,18 @@ class Auditor
     public function setLocation(string $location): self
     {
         $this->location = $location;
+
+        return $this;
+    }
+
+    public function getTimezone(): ?string
+    {
+        return $this->timezone;
+    }
+
+    public function setTimezone(string $timezone): self
+    {
+        $this->timezone = $timezone;
 
         return $this;
     }

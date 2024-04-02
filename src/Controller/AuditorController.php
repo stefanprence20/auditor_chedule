@@ -6,6 +6,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 use App\Entity\Auditor;
 use App\Entity\Job;
 
@@ -26,7 +27,6 @@ class AuditorController extends AbstractController
         // Get the auditor's schedule
         $schedule = $auditor->getSchedule();
 
-        // Convert the schedule to JSON and return as response
         return $this->json($schedule);
     }
 
@@ -46,9 +46,9 @@ class AuditorController extends AbstractController
 
         // Create a new job
         $job = new Job();
-        $job->setTitle($data['title']); // Assuming title is passed in the request
-        $job->setDescription($data['description']); // Assuming description is passed in the request
-        $job->setDate($data['date']); // Assuming date is passed in the request
+        $job->setTitle($data['title']);
+        $job->setDescription($data['description']);
+        $job->setDate($data['date']);
 
         // Assign the job to the auditor
         $auditor->addJob($job);
@@ -64,10 +64,11 @@ class AuditorController extends AbstractController
     /**
      * @Route("/api/jobs/{id}/complete", methods={"PUT"})
      */
-    public function markJobAsCompleted($id): Response
+    public function markJobAsCompleted(Request $request, $id, SerializerInterface $serializer): Response
     {
         // Retrieve the job from the database
-        $job = $this->getDoctrine()->getRepository(Job::class)->find($id);
+        $entityManager = $this->getDoctrine()->getManager();
+        $job = $entityManager->getRepository(Job::class)->find($id);
 
         if (!$job) {
             return new Response("Job not found", Response::HTTP_NOT_FOUND);
@@ -76,10 +77,24 @@ class AuditorController extends AbstractController
         // Mark the job as completed
         $job->setCompleted(true);
 
+        // If assessment is provided, set it for the job
+        $data = json_decode($request->getContent(), true);
+        if (isset($data['assessment'])) {
+            $job->setAssessment($data['assessment']);
+        }
+
+        // Handle time zone conversion based on auditor's location
+        $auditor = $job->getAuditor();
+        $timezone = new \DateTimeZone($auditor->getTimezone());
+        $now = new \DateTime('now', $timezone);
+        $job->setCompletedAt($now);
+
         // Save the changes to the database
-        $entityManager = $this->getDoctrine()->getManager();
         $entityManager->flush();
 
-        return new Response("Job marked as completed successfully!", Response::HTTP_OK);
+        // Serialize the updated job and return as response
+        $json = $serializer->serialize($job, 'json');
+
+        return new Response($json, Response::HTTP_OK, ['Content-Type' => 'application/json']);
     }
 }
