@@ -3,3 +3,6 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+auditor_api:
+    path: /api/auditor
+    controller: App\Controller\AuditorController
